@@ -67,7 +67,7 @@ def train(net, opt, scheduler, train_loader, dev):
             data[:, :, 0:3] = provider.shift_point_cloud(data[:, :, 0:3])
             data = torch.tensor(data)
             label = label[:, 0]
-            print(data.shape, label.shape)
+            # print(data.shape, label.shape)
 
             num_examples = label.shape[0]
             data, label = data.to(dev), label.to(dev).squeeze().long()

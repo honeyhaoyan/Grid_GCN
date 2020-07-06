@@ -66,7 +66,7 @@ class VoxelModule(nn.Module):
         size = point_cloud.size()
         # torch.Size([32, 1024, 3])
         index_voxels = []
-        for i in range(size[0]):
+        for i in range(size[0]): # batch
             xyz_max = torch.max(point_cloud[i,:,:], 0)
             xyz_min = torch.min(point_cloud[i,:,:], 0)
             index_voxels_tmp = []
@@ -122,6 +122,9 @@ class CAS(nn.Module):
         super(CAS, self).__init__()
         self.npoints = npoints
 
+    def forward(self, pos, index_voxels):
+        pass
+
 # RVS Module
 class RVS(nn.Module):
     def __init__(self, npoints):
@@ -129,9 +132,9 @@ class RVS(nn.Module):
         self.npoints = npoints
 
     def forward(self, pos, index_voxels):
-        B = len(index_voxels)
+        B = len(index_voxels) # batch_size
         device = pos.device
-        vs = int(np.cbrt(len(index_voxels[0]))) # 64 -> 4
+        vs = int(np.cbrt(len(index_voxels[0]))) # 64 -> 4, voxel_size
         centroids = torch.zeros(B, self.npoints, dtype=torch.long).to(device)
         centroids_index = []
 
@@ -195,14 +198,14 @@ class FixedRadiusNearNeighbors(nn.Module):
         device = pos.device
         B, N, _ = pos.shape
         center_pos = index_points(pos, centroids)
-        print(center_pos.shape)
+        # print(center_pos.shape)
         _, S, _ = center_pos.shape
-        print(B, N, S)
+        # print(B, N, S)
         # print(torch.arange(N, dtype=torch.long).to(device).view(1, 1, N).shape)
         group_idx = torch.arange(N, dtype=torch.long).to(device).view(1, 1, N).repeat([B, S, 1])
         # print(group_idx.shape)
         sqrdists = square_distance(center_pos, pos)
-        print(sqrdists.shape)
+        # print(sqrdists.shape)
         group_idx[sqrdists > self.radius ** 2] = N
         # print(group_idx.shape)
         group_idx = group_idx.sort(dim=-1)[0][:, :, :self.n_neighbor]
@@ -306,10 +309,17 @@ class RelativePositionMessage(nn.Module):
     def forward(self, edges):
         pos = edges.src['pos'] - edges.dst['pos']
         if 'feat' in edges.src:
+            #print("=========== in if ===========")
             res = torch.cat([pos, edges.src['feat']], 1)
         else:
+            #print("in else")
             res = pos
-        return {'agg_feat': res}
+        # print(pos.shape, edges.src['pos'].shape, edges.src['pos'].shape, edges.src['feat'].shape)
+        # print(edges.src.keys())
+        # print(edges.src['center'].shape)
+        geo_feat = torch.cat([edges.src['pos'], edges.dst['pos']], 1)
+        print('send feat shape ', res.shape, geo_feat.shape)
+        return {'agg_feat': res, 'geo_feat': geo_feat}
 
 
 class Grid_GCN_Conv(nn.Module):
@@ -322,21 +332,51 @@ class Grid_GCN_Conv(nn.Module):
         self.conv = nn.ModuleList()
         self.bn = nn.ModuleList()
         self.sizes = sizes
+        print("sizes: "+str(sizes))
         for i in range(1, len(sizes)):
             self.conv.append(nn.Conv2d(sizes[i-1], sizes[i], 1))
             self.bn.append(nn.BatchNorm2d(sizes[i]))
+        # geo
+        self.conv_geo = nn.ModuleList()
+        self.bn_geo = nn.ModuleList()
+        for i in range(1, len(sizes)):
+            if i == 1:
+                self.conv_geo.append(nn.Conv2d(6, sizes[i], 1))
+                self.bn_geo.append(nn.BatchNorm2d(sizes[i])) 
+            else:               
+                self.conv_geo.append(nn.Conv2d(sizes[i-1], sizes[i], 1))
+                self.bn_geo.append(nn.BatchNorm2d(sizes[i]))
 
     def forward(self, nodes):
         shape = nodes.mailbox['agg_feat'].shape
         h = nodes.mailbox['agg_feat'].view(self.batch_size, -1, shape[1], shape[2]).permute(0, 3, 1, 2)
+        print('here shape: ', h.shape)
         for conv, bn in zip(self.conv, self.bn):
             h = conv(h)
             h = bn(h)
             h = F.relu(h)
+            # print("H shape: ")=
         h = torch.max(h, 3)[0]
         feat_dim = h.shape[1]
         h = h.permute(0, 2, 1).reshape(-1, feat_dim)
-        return {'new_feat': h}
+        print('h shape: ', h.shape)
+
+        # geo
+        shape = nodes.mailbox['geo_feat'].shape
+        print('22 ', shape)
+        h_geo = nodes.mailbox['geo_feat'].view(self.batch_size, -1, shape[1], shape[2]).permute(0, 3, 1, 2)
+        print('here shape: ', h_geo.shape)
+        for conv, bn in zip(self.conv_geo, self.bn_geo):
+            h_geo = conv(h_geo)
+            h_geo = bn(h_geo)
+            h_geo = F.relu(h_geo)
+        h_geo = torch.max(h_geo, 3)[0]
+        feat_dim = h_geo.shape[1]
+        h_geo = h_geo.permute(0, 2, 1).reshape(-1, feat_dim)
+        
+        h_all = torch.cat([h, h_geo], 0)
+        print('h_geo.shape: ', h_geo.shape)
+        return {'new_feat': h_all}
     
     def group_all(self, pos, feat):
         '''
@@ -350,9 +390,6 @@ class Grid_GCN_Conv(nn.Module):
         '''
         Q&A: How could we concatenate the weight matrix?
         '''
-
-        # h_geo = 
-        # h_semantic = 
 
         if feat is not None:
             h = torch.cat([pos, feat], 2)
