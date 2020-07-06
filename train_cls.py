@@ -18,7 +18,7 @@ import provider
 from ModelNetDataLoader import ModelNetDataLoader
 from pointnet_cls import PointNetCls
 from pointnet2 import PointNet2SSGCls, PointNet2MSGCls
-from grid_gcn import Grid_GCN
+from grid_gcn_2 import Grid_GCN
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='pointnet')
@@ -67,6 +67,7 @@ def train(net, opt, scheduler, train_loader, dev):
             data[:, :, 0:3] = provider.shift_point_cloud(data[:, :, 0:3])
             data = torch.tensor(data)
             label = label[:, 0]
+            print(data.shape, label.shape)
 
             num_examples = label.shape[0]
             data, label = data.to(dev), label.to(dev).squeeze().long()

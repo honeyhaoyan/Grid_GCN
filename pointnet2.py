@@ -62,6 +62,10 @@ class FarthestPointSampler(nn.Module):
             mask = dist < distance
             distance[mask] = dist[mask]
             farthest = torch.max(distance, -1)[1]
+        print(centroids, centroids.shape)
+        for batch in range(B):
+            print('length: ',len(set(centroids[batch,:])), max(set(centroids[batch,:])), min(set(centroids[batch,:])) )
+        print(centroids[0,0].type)
         return centroids
 
 #################################################
@@ -142,6 +146,7 @@ class RelativePositionMessage(nn.Module):
             res = torch.cat([pos, edges.src['feat']], 1)
         else:
             res = pos
+        print('RelativePositionMessage: ', res.shape)
         return {'agg_feat': res}
 
 ##########################################
@@ -152,6 +157,7 @@ class PointNetConv(nn.Module):
     def __init__(self, sizes, batch_size):
         super(PointNetConv, self).__init__()
         self.batch_size = batch_size
+        self.sizes = sizes
         self.conv = nn.ModuleList()
         self.bn = nn.ModuleList()
         for i in range(1, len(sizes)):
@@ -160,6 +166,8 @@ class PointNetConv(nn.Module):
 
     def forward(self, nodes):
         shape = nodes.mailbox['agg_feat'].shape
+        print('here shape:', shape, self.batch_size)
+        print('sizes: ', self.sizes, self.batch_size)
         h = nodes.mailbox['agg_feat'].view(self.batch_size, -1, shape[1], shape[2]).permute(0, 3, 1, 2)
         for conv, bn in zip(self.conv, self.bn):
             h = conv(h)
@@ -213,6 +221,7 @@ class SAModule(nn.Module):
             return self.conv.group_all(pos, feat)
 
         centroids = self.fps(pos)
+        print('input g', pos.shape, centroids.shape, feat.shape)
         g = self.frnn_graph(pos, centroids, feat)
         g.update_all(self.message, self.conv)
         mask = g.ndata['center'] == 1
@@ -287,7 +296,9 @@ class PointNet2SSGCls(nn.Module):
         else:
             pos = x
             feat = None
+        print('sa_module1')
         pos, feat = self.sa_module1(pos, feat)
+        print('sa_module2')
         pos, feat = self.sa_module2(pos, feat)
         #print(self.sa_module3(pos, feat))
         #print("********\n")

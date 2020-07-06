@@ -6,6 +6,7 @@ import numpy as np
 import dgl
 import dgl.function as fn
 import math
+import random
 
 '''
 Part of the code are adapted from
@@ -51,62 +52,37 @@ def index_points(points, idx):
 class VoxelModule(nn.Module):
     def __init__(self, voxel_size):
         super(VoxelModule, self).__init__()
-        #self.point_cloud = point_cloud
         self.voxel_size = voxel_size
         self.voxels = None
-        self.index_voxels = []
-        for i in range(voxel_size):
-            self.index_voxels.append([])
-            for j in range(voxel_size):
-                self.index_voxels[i].append([])
-                for k in range(voxel_size):
-                    self.index_voxels[i][j].append([])
-        # self.voxels = torch.div(self.point_cloud, self.voxel_size, out=None)
-        #print("/////")
 
-    
+    # append val to self.index_voxels
+    def set_voxel_value(self, index_voxels, val, x, y, z):
+        index1 = self.voxel_size * self.voxel_size
+        index2 = self.voxel_size
+        index_voxels[x * index1 + y * index2 + z].append(val)
+
     def forward(self, point_cloud):
         #self.voxels = torch.div(point_cloud, self.voxel_size, out=None)
         size = point_cloud.size()
-        #print(size)
         # torch.Size([32, 1024, 3])
-        xyz_max = torch.max(point_cloud, 1)
-        xyz_min = torch.min(point_cloud, 1)
-        self.voxels = torch.rand(size[0],size[1],size[2])
-        #print(xyz_max.values[1][2].item())
-        indexes = [0,0,0]
+        index_voxels = []
         for i in range(size[0]):
+            xyz_max = torch.max(point_cloud[i,:,:], 0)
+            xyz_min = torch.min(point_cloud[i,:,:], 0)
+            index_voxels_tmp = []
+            for _ in range(self.voxel_size):
+                for _ in range(self.voxel_size):
+                    for _ in range(self.voxel_size):
+                        index_voxels_tmp.append([])             
             for j in range(size[1]):
-                for k in range(size[2]):
-                    indexes[k] = int((point_cloud[i][j][k].item()-xyz_min.values[i][k].item())/((xyz_max.values[i][k].item()-xyz_min.values[i][k].item())/10.0))
-                    if (indexes[k]==10):
-                        indexes[k] = 9
-                    self.voxels[i][j][k] = indexes[k]
-                    #print(self.voxels[i][j][k].item()) 
-                #print("voxel_size: "+str(self.voxel_size))
-                #print("i: "+str(i)+" j: "+str(j)+" k: "+str(k))
-                self.index_voxels[indexes[0]][indexes[1]][indexes[2]].append([i,j]) 
-                #print(self.index_voxels[indexes[0]][indexes[1]][indexes[2]])                 
+                index = (point_cloud[i,j,:]-xyz_min.values)/(xyz_max.values-xyz_min.values)*(self.voxel_size-1)
+                # print(index)
+                # print(int(index[0]))
+                self.set_voxel_value(index_voxels_tmp, j, int(index[0]), int(index[1]), int(index[2]))
+            index_voxels.append(index_voxels_tmp)
+        return index_voxels
 
-
-
-        return self.voxels
-        
-        # Here !!!!
-        # conduct voxels!!!
-        # map point cloud to voxels 
-
-    # this function gets point cloud initial xyz
-    def get_point(self, point_cloud, voxel_size):
-        #torch.div(input,, out=None)
-        print("111")
-
-    # 
-    def get_context_points(self):
-        print("111")
-
-
-     
+   
 
 class FarthestPointSampler(nn.Module):
     '''
@@ -137,11 +113,7 @@ class FarthestPointSampler(nn.Module):
             mask = dist < distance
             distance[mask] = dist[mask]
             farthest = torch.max(distance, -1)[1]
-        #print(self.npoints)
-        #print(centroids.size())
-
         return centroids
-
 
 
 # CAS Module
@@ -156,15 +128,54 @@ class RVS(nn.Module):
         super(RVS, self).__init__()
         self.npoints = npoints
 
-    def forward(self, pos):
-        voxel_list = set()
-        number = pos.size()[0].item()
-        while(voxel_list.size)
-        #print(number)
-        #device = pos.device
-        #B, N, C = pos.shape
-        #centroids = torch.zeros(B, self.npoints, dtype=torch.long).to(device)
-        return 0
+    def forward(self, pos, index_voxels):
+        B = len(index_voxels)
+        device = pos.device
+        vs = int(np.cbrt(len(index_voxels[0]))) # 64 -> 4
+        centroids = torch.zeros(B, self.npoints, dtype=torch.long).to(device)
+        centroids_index = []
+
+        for batch in range(B):
+            occupied = []
+            for i in range(vs):
+                for j in range(vs):
+                    for k in range(vs):
+                        if len(self.get_voxel_value(index_voxels, vs, batch, i, j, k)) != 0:
+                            occupied.append([i, j, k])
+            if self.npoints <= len(occupied):
+                selected = random.sample(occupied, self.npoints)
+            
+            indexs = []
+            if self.npoints <= len(occupied):
+                for i in range(self.npoints):
+                    val = self.get_voxel_value(index_voxels, vs, batch, selected[i][0], selected[i][1], selected[i][2])
+                    index = int(random.sample(val, 1)[0])
+                    centroids[batch,i] = index #index
+                    indexs.append([batch, selected[i][0], selected[i][1], selected[i][2], val.index(index)])
+            else:
+                added = []
+                for i in range(len(occupied)):
+                    val = self.get_voxel_value(index_voxels, vs, batch, occupied[i][0], occupied[i][1], occupied[i][2])
+                    index = int(random.sample(val, 1)[0])
+                    centroids[batch,i] = index
+                    added.append(index)
+                    indexs.append([batch, occupied[i][0], occupied[i][1], occupied[i][2], val.index(index)])
+                add_num = 0
+                while add_num < (self.npoints-len(occupied)):
+                    index = int(random.sample(range(pos.shape[1]), 1)[0])
+                    if index not in added:
+                        centroids[batch, len(occupied)+add_num] = index
+                        added.append(index)
+                        add_num += 1
+
+            centroids_index.append(indexs)
+        return centroids, centroids_index # centroid_index is not used
+
+    # get value from self.index_voxels
+    def get_voxel_value(self, index_voxels, voxel_size, batch, x, y, z):
+        index1 = voxel_size * voxel_size
+        index2 = voxel_size
+        return index_voxels[batch][x * index1 + y * index2 + z]
 
 
 class FixedRadiusNearNeighbors(nn.Module):
@@ -176,9 +187,50 @@ class FixedRadiusNearNeighbors(nn.Module):
         self.radius = radius
         self.n_neighbor = n_neighbor
 
-    def forward(self, pos, centroids):
+    def forward(self, pos, centroids, centroids_index, index_voxels):
         '''
         Adapted from https://github.com/yanx27/Pointnet_Pointnet2_pytorch
+        TODO: Need to update the select neighbor operation
+        '''
+        device = pos.device
+        B, N, _ = pos.shape
+        center_pos = index_points(pos, centroids)
+        print(center_pos.shape)
+        _, S, _ = center_pos.shape
+        print(B, N, S)
+        # print(torch.arange(N, dtype=torch.long).to(device).view(1, 1, N).shape)
+        group_idx = torch.arange(N, dtype=torch.long).to(device).view(1, 1, N).repeat([B, S, 1])
+        # print(group_idx.shape)
+        sqrdists = square_distance(center_pos, pos)
+        print(sqrdists.shape)
+        group_idx[sqrdists > self.radius ** 2] = N
+        # print(group_idx.shape)
+        group_idx = group_idx.sort(dim=-1)[0][:, :, :self.n_neighbor]
+        # print(group_idx.shape)
+        group_first = group_idx[:, :, 0].view(B, S, 1).repeat([1, 1, self.n_neighbor])
+        # print(group_first.shape)
+        mask = group_idx == N
+        # print(mask.shape)
+        group_idx[mask] = group_first[mask]
+        # print('group_idx', group_idx.shape)
+        print(group_idx.shape)
+        print(group_idx[0,:,:])
+        print(group_idx[0,0,:])
+        return group_idx
+
+class GridGCNNearNeighbors(nn.Module):
+    '''
+    Find the neighbors with-in a fixed radius
+    '''
+    def __init__(self, radius, n_neighbor):
+        super(GridGCNNearNeighbors, self).__init__()
+        self.radius = radius
+        self.n_neighbor = n_neighbor
+
+    def forward(self, pos, centroids, centroids_index, index_voxels):
+        '''
+        Adapted from https://github.com/yanx27/Pointnet_Pointnet2_pytorch
+        TODO: Need to update the select neighbor operation
         '''
         device = pos.device
         B, N, _ = pos.shape
@@ -200,8 +252,6 @@ class FixedNumberNeighbors(nn.Module):
         super(FixedNumberNeighbors, self).__init__()
         self.n_neighbor = n_neighbor
 
-    
-
 
 class FixedRadiusNNGraph(nn.Module):
     '''
@@ -216,9 +266,9 @@ class FixedRadiusNNGraph(nn.Module):
         self.n_neighbor = n_neighbor
         self.frnn = FixedRadiusNearNeighbors(radius, n_neighbor)
 
-    def forward(self, pos, centroids, feat=None):
+    def forward(self, pos, centroids, centroids_index, index_voxels, feat=None):
         dev = pos.device
-        group_idx = self.frnn(pos, centroids)
+        group_idx = self.frnn(pos, centroids, centroids_index, index_voxels)
         B, N, _ = pos.shape
         glist = []
         for i in range(B):
@@ -271,6 +321,7 @@ class Grid_GCN_Conv(nn.Module):
         self.batch_size = batch_size
         self.conv = nn.ModuleList()
         self.bn = nn.ModuleList()
+        self.sizes = sizes
         for i in range(1, len(sizes)):
             self.conv.append(nn.Conv2d(sizes[i-1], sizes[i], 1))
             self.bn.append(nn.BatchNorm2d(sizes[i]))
@@ -305,8 +356,6 @@ class Grid_GCN_Conv(nn.Module):
 
         if feat is not None:
             h = torch.cat([pos, feat], 2)
-
-
         else:
             h = pos
         shape = h.shape
@@ -320,18 +369,17 @@ class Grid_GCN_Conv(nn.Module):
         h = torch.max(h[:, :, :, 0], 2)[0]
         
         # Should we do the same thing to h_geo and h_semantic
-
-
         return h
 
 class SAModule(nn.Module):
     """
     The Set Abstraction Layer
     """
-    def __init__(self, npoints, batch_size, radius, mlp_sizes, n_neighbor=64,
+    def __init__(self, npoints, batch_size, radius, voxel_size, mlp_sizes, n_neighbor=64,
                  group_all=False):
         super(SAModule, self).__init__()
         self.group_all = group_all
+        self.voxel_size = voxel_size
         if not group_all:
             self.fps = FarthestPointSampler(npoints)
             self.rvs = RVS(npoints)
@@ -339,21 +387,24 @@ class SAModule(nn.Module):
         self.message = RelativePositionMessage(n_neighbor)
         self.conv = Grid_GCN_Conv(mlp_sizes, batch_size)
         self.batch_size = batch_size
+        self.selfvoxels = VoxelModule(voxel_size)
 
-    def forward(self, pos, feat):
+    def forward(self, pos, feat, index_voxels):
         if self.group_all:
             return self.conv.group_all(pos, feat)
 
-        #centroids = self.fps(pos)
-        centroids = self.rvs(pos)
-        g = self.frnn_graph(pos, centroids, feat)
+        centroids, centroids_index = self.rvs(pos, index_voxels)
+        # centroids = self.fps(pos)
+        # centroids_index = None
+        g = self.frnn_graph(pos, centroids, index_voxels, centroids_index, feat)
         g.update_all(self.message, self.conv)
         mask = g.ndata['center'] == 1
         pos_dim = g.ndata['pos'].shape[-1]
         feat_dim = g.ndata['new_feat'].shape[-1]
         pos_res = g.ndata['pos'][mask].view(self.batch_size, -1, pos_dim)
         feat_res = g.ndata['new_feat'][mask].view(self.batch_size, -1, feat_dim)
-        return pos_res, feat_res
+        index_voxels_res = self.selfvoxels(pos_res)
+        return pos_res, feat_res, index_voxels_res
 
 
 
@@ -362,9 +413,11 @@ class Grid_GCN(nn.Module):
         super(Grid_GCN, self).__init__()
         self.input_dims = input_dims
 
-        self.sa_module1 = SAModule(512, batch_size, 0.2, [input_dims, 64, 64, 128])
-        self.sa_module2 = SAModule(128, batch_size, 0.4, [128 + 3, 128, 128, 256])
-        self.sa_module3 = SAModule(None, batch_size, None, [256 + 3, 256, 512, 1024],
+        self.voxel_size = 40
+
+        self.sa_module1 = SAModule(512, batch_size, 0.2, self.voxel_size, [input_dims, 64, 64, 128])
+        self.sa_module2 = SAModule(128, batch_size, 0.4, self.voxel_size, [128 + 3, 128, 128, 256])
+        self.sa_module3 = SAModule(None, batch_size, None, self.voxel_size, [256 + 3, 256, 512, 1024],
                                    group_all=True)
 
         self.mlp1 = nn.Linear(1024, 512)
@@ -377,13 +430,10 @@ class Grid_GCN(nn.Module):
 
         self.mlp_out = nn.Linear(256, output_classes)
 
-        self.selfvoxels = VoxelModule(10)
-
-        self.voxels = None
+        self.selfvoxels = VoxelModule(self.voxel_size)
 
     def forward(self, x):
         #print("----------")
-        self.voxels = self.selfvoxels(x[:, :, :3])
         #print(voxels)
         #print("----------")
         if x.shape[-1] > 3:
@@ -392,10 +442,11 @@ class Grid_GCN(nn.Module):
         else:
             pos = x
             feat = None
-        pos, feat = self.sa_module1(pos, feat)
-        pos, feat = self.sa_module2(pos, feat)
+        index_voxels = self.selfvoxels(pos)
+        pos, feat, index_voxels = self.sa_module1(pos, feat, index_voxels)
+        pos, feat, index_voxels = self.sa_module2(pos, feat, index_voxels)
         #print(self.sa_module3(pos, feat))
-        h = self.sa_module3(pos, feat)
+        h = self.sa_module3(pos, feat, index_voxels)
 
         h = self.mlp1(h)
         h = self.bn1(h)
