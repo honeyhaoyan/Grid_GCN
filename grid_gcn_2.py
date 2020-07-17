@@ -290,7 +290,7 @@ class FixedRadiusNearNeighbors(nn.Module):
 
     '''
 
-    def forward(self, pos, centroids, centroids_index, index_voxels):
+    def forward(self, pos, centroids, centroids_index, index_voxels, voxel_size):
         
         #Adapted from https://github.com/yanx27/Pointnet_Pointnet2_pytorch
         #TODO: Need to update the select neighbor operation
@@ -326,8 +326,10 @@ class FixedRadiusNearNeighbors(nn.Module):
         # print(group_idx.shape)
         # print(group_idx[0,:,:])
         # print(group_idx[0,0,:])
+        print(group_idx.shape)
         return group_idx
     '''
+    
 
     def find_voxel_neighbour(self, voxel):
         voxel_list = []
@@ -336,7 +338,7 @@ class FixedRadiusNearNeighbors(nn.Module):
                 for k in range (3):
                     if (i==2 and j == 1 and k == 1):
                         continue
-                    
+                
                     else:
                         new_voxel = [voxel[0]+i-1, voxel[1]+j-1, voxel[2]+k-1]
                         voxel_list.append(new_voxel)
@@ -371,7 +373,7 @@ class FixedRadiusNearNeighbors(nn.Module):
         #print(B, N, S)
         #print(torch.arange(N, dtype=torch.long).to(device).view(1, 1, N).shape)
         #group_idx = torch.arange(N, dtype=torch.long).to(device).view(1, 1, N).repeat([B, S, 1])
-        group_idx = torch.ones(B, N, self.n_neighbor)
+        group_idx = torch.ones(B, S, self.n_neighbor)
         
         #print("group_idx shape: " + str(group_idx.shape))
         #print(group_idx[0])
@@ -399,8 +401,12 @@ class FixedRadiusNearNeighbors(nn.Module):
                     group_idx[i][j][k] = center
                     k = k+1
                 j = j+1
+            print(group_idx.shape)
             i = i+1
+        group_idx = group_idx.float().to(device)
+        print(group_idx.shape)
         return group_idx
+    
 
 
                 
@@ -472,7 +478,8 @@ class FixedRadiusNNGraph(nn.Module):
             center = torch.zeros((N)).to(dev)
             center[centroids[i]] = 1
             src = group_idx[i].contiguous().view(-1)
-            dst = centroids[i].view(-1, 1).repeat(1, self.n_neighbor).view(-1)
+            #src = src.to(dev)
+            dst = centroids[i].view(-1, 1).repeat(1, self.n_neighbor).view(-1).float()
 
             unified = torch.cat([src, dst])
             uniq, idx, inv_idx = np.unique(unified.cpu().numpy(), return_index=True, return_inverse=True)
