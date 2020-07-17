@@ -2,6 +2,7 @@ import numpy as np
 import warnings
 import os
 from torch.utils.data import Dataset
+import torch
 warnings.filterwarnings('ignore')
 
 def pc_normalize(pc):
@@ -37,6 +38,20 @@ def farthest_point_sample(point, npoint):
         farthest = np.argmax(distance, -1)
     point = point[centroids.astype(np.int32)]
     return point
+
+def normalization(points):
+    size = points.size()
+    for i in range(size[0]): # batch
+        #print(str(xyz_max)+" "+str(xyz_min))
+        xyz_max = torch.max(points[i,:,:], 0)
+        xyz_min = torch.min(points[i,:,:], 0)
+        #print(str(xyz_max)+" "+str(xyz_min))
+        xyz = (points-xyz_min.values)/(xyz_max.values-xyz_min.values)
+        #xyz_max = torch.max(xyz[i,:,:], 0)
+        #xyz_min = torch.min(xyz[i,:,:], 0)
+        #print(str(xyz_max)+" "+str(xyz_min))
+        return xyz
+
 
 class ModelNetDataLoader(Dataset):
     def __init__(self, root, npoint=1024, split='train', fps=False, 
@@ -97,6 +112,9 @@ class ModelNetDataLoader(Dataset):
             if len(self.cache) < self.cache_size:
                 self.cache[index] = (point_set, cls)
 
+        #print("---------------------------")
+        #print(point_set.size())
+        #print("---------------------------")
         return point_set, cls
 
     def __getitem__(self, index):

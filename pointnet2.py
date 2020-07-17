@@ -63,9 +63,9 @@ class FarthestPointSampler(nn.Module):
             distance[mask] = dist[mask]
             farthest = torch.max(distance, -1)[1]
         print(centroids, centroids.shape)
-        for batch in range(B):
-            print('length: ',len(set(centroids[batch,:])), max(set(centroids[batch,:])), min(set(centroids[batch,:])) )
-        print(centroids[0,0].type)
+        #for batch in range(B):
+            #print('length: ',len(set(centroids[batch,:])), max(set(centroids[batch,:])), min(set(centroids[batch,:])) )
+        #print(centroids[0,0].type)
         return centroids
 
 #################################################
@@ -146,6 +146,7 @@ class RelativePositionMessage(nn.Module):
             res = torch.cat([pos, edges.src['feat']], 1)
         else:
             res = pos
+        print(res.shape, pos.shape, edges.src['pos'].shape, edges.src['pos'].shape, edges.src['feat'].shape)
         print('RelativePositionMessage: ', res.shape)
         return {'agg_feat': res}
 
@@ -183,13 +184,13 @@ class PointNetConv(nn.Module):
         Feature aggretation and pooling for the non-sampling layer
         '''
         if feat is not None:
-            print(pos.size())
-            print('----\n')
-            print(feat.size())
-            print('----\n')
+            #print(pos.size())
+            #print('----\n')
+            #print(feat.size())
+            #print('----\n')
             h = torch.cat([pos, feat], 2)
-            print(h.size())
-            print('----\n')
+            #print(h.size())
+            #print('----\n')
         else:
             h = pos
         shape = h.shape
@@ -221,7 +222,7 @@ class SAModule(nn.Module):
             return self.conv.group_all(pos, feat)
 
         centroids = self.fps(pos)
-        print('input g', pos.shape, centroids.shape, feat.shape)
+        #print('input g', pos.shape, centroids.shape, feat.shape)
         g = self.frnn_graph(pos, centroids, feat)
         g.update_all(self.message, self.conv)
         mask = g.ndata['center'] == 1
