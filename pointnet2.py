@@ -5,6 +5,7 @@ from torch.autograd import Variable
 import numpy as np
 import dgl
 import dgl.function as fn
+from pyinstrument import Profiler
 
 '''
 Part of the code are adapted from
@@ -82,6 +83,8 @@ class FixedRadiusNearNeighbors(nn.Module):
         '''
         Adapted from https://github.com/yanx27/Pointnet_Pointnet2_pytorch
         '''
+        profiler = Profiler()
+        profiler.start()
         device = pos.device
         B, N, _ = pos.shape
         center_pos = index_points(pos, centroids)
@@ -93,6 +96,9 @@ class FixedRadiusNearNeighbors(nn.Module):
         group_first = group_idx[:, :, 0].view(B, S, 1).repeat([1, 1, self.n_neighbor])
         mask = group_idx == N
         group_idx[mask] = group_first[mask]
+        profiler.stop()
+
+        print(profiler.output_text(unicode=True, color=True))
         return group_idx
 
 #############################################

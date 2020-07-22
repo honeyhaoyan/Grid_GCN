@@ -8,6 +8,7 @@ import dgl.function as fn
 import math
 import random
 from ModelNetDataLoader import normalization
+from pyinstrument import Profiler
 
 '''
 Part of the code are adapted from
@@ -361,6 +362,8 @@ class FixedRadiusNearNeighbors(nn.Module):
                     
 
     def forward(self, pos, centroids, centroids_index, index_voxels, voxel_size):
+        profiler = Profiler()
+        profiler.start()
         
         #Adapted from https://github.com/yanx27/Pointnet_Pointnet2_pytorch
         #TODO: Need to update the select neighbor operation
@@ -405,6 +408,10 @@ class FixedRadiusNearNeighbors(nn.Module):
             i = i+1
         group_idx = group_idx.float().to(device)
         print(group_idx.shape)
+
+        profiler.stop()
+
+        print(profiler.output_text(unicode=True, color=True))
         return group_idx
     
 

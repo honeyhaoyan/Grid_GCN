@@ -1,0 +1,11 @@
+grid_gcn_2.py 
+
+30.996 forward  grid_gcn_2.py:364
+├─ 13.000 find_voxel_neighbour  grid_gcn_2.py:335
+├─ 9.325 [self]  
+└─ 8.561 get_context_points  grid_gcn_2.py:349
+
+
+
+
+
