@@ -1,3 +1,5 @@
+**************************** time of FixedRadiusNearNeighbors forward *********************************
+
 grid_gcn_2.py 
 
 30.996 forward  grid_gcn_2.py:364
@@ -7,5 +9,55 @@ grid_gcn_2.py
 
 
 
+
+
+
+
+
+
+***************************** total forward time of model pointnet++ and grid_gcn ********************************************
+
+1.150 forward  pointnet2.py:299
+└─ 1.150 __call__  torch/nn/modules/module.py:522
+      [4 frames hidden]  torch
+         1.149 forward  pointnet2.py:226
+         ├─ 0.972 __call__  torch/nn/modules/module.py:522
+         │     [2 frames hidden]  torch
+         │        0.600 forward  pointnet2.py:49
+         │        └─ 0.591 [self]  
+         │        0.369 forward  pointnet2.py:115
+         │        ├─ 0.205 unique  <__array_function__ internals>:2
+         │        │     [11 frames hidden]  <__array_function__ internals>, numpy
+         │        ├─ 0.068 [self]  
+         │        ├─ 0.042 batch  dgl/graph.py:4003
+         │        │     [25 frames hidden]  dgl
+         │        ├─ 0.032 __setitem__  dgl/view.py:62
+         │        │     [31 frames hidden]  dgl, abc
+         │        └─ 0.014 __call__  torch/nn/modules/module.py:522
+         │           └─ 0.014 forward  pointnet2.py:82
+         │              └─ 0.012 [self]  
+         └─ 0.171 update_all  dgl/graph.py:3195
+               [46 frames hidden]  dgl, torch
+                  0.012 __call__  torch/nn/modules/module.py:522
+                  └─ 0.012 forward  pointnet2.py:174
+
+7.566 forward  grid_gcn_2.py:688
+└─ 7.563 __call__  torch/nn/modules/module.py:522
+      [2 frames hidden]  torch
+         4.069 forward  grid_gcn_2.py:645
+         ├─ 3.912 __call__  torch/nn/modules/module.py:522
+         │  ├─ 2.152 forward  grid_gcn_2.py:83
+         │  │  └─ 2.146 [self]  
+         │  ├─ 1.490 forward  grid_gcn_2.py:204
+         │  │  ├─ 1.027 [self]  
+         │  │  └─ 0.462 sample  random.py:286
+         │  │        [10 frames hidden]  random, abc, _collections_abc
+         │  └─ 0.270 forward  grid_gcn_2.py:479
+         │     └─ 0.082 unique  <__array_function__ internals>:2
+         │           [9 frames hidden]  <__array_function__ internals>, numpy
+         └─ 0.152 update_all  dgl/graph.py:3195
+               [32 frames hidden]  dgl, torch
+         3.493 forward  grid_gcn_2.py:83
+         └─ 3.455 [self]  
 
 

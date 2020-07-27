@@ -63,7 +63,7 @@ class FarthestPointSampler(nn.Module):
             mask = dist < distance
             distance[mask] = dist[mask]
             farthest = torch.max(distance, -1)[1]
-        print(centroids, centroids.shape)
+        #print(centroids, centroids.shape)
         #for batch in range(B):
             #print('length: ',len(set(centroids[batch,:])), max(set(centroids[batch,:])), min(set(centroids[batch,:])) )
         #print(centroids[0,0].type)
@@ -152,8 +152,8 @@ class RelativePositionMessage(nn.Module):
             res = torch.cat([pos, edges.src['feat']], 1)
         else:
             res = pos
-        print(res.shape, pos.shape, edges.src['pos'].shape, edges.src['pos'].shape, edges.src['feat'].shape)
-        print('RelativePositionMessage: ', res.shape)
+        #print(res.shape, pos.shape, edges.src['pos'].shape, edges.src['pos'].shape, edges.src['feat'].shape)
+        #print('RelativePositionMessage: ', res.shape)
         return {'agg_feat': res}
 
 ##########################################
@@ -170,11 +170,11 @@ class PointNetConv(nn.Module):
         for i in range(1, len(sizes)):
             self.conv.append(nn.Conv2d(sizes[i-1], sizes[i], 1))
             self.bn.append(nn.BatchNorm2d(sizes[i]))
-
+ 
     def forward(self, nodes):
         shape = nodes.mailbox['agg_feat'].shape
-        print('here shape:', shape, self.batch_size)
-        print('sizes: ', self.sizes, self.batch_size)
+        #print('here shape:', shape, self.batch_size)
+        #print('sizes: ', self.sizes, self.batch_size)
         h = nodes.mailbox['agg_feat'].view(self.batch_size, -1, shape[1], shape[2]).permute(0, 3, 1, 2)
         for conv, bn in zip(self.conv, self.bn):
             h = conv(h)
@@ -297,6 +297,8 @@ class PointNet2SSGCls(nn.Module):
         self.mlp_out = nn.Linear(256, output_classes)
 
     def forward(self, x):
+        profiler = Profiler()
+        profiler.start()
         if x.shape[-1] > 3:
             pos = x[:, :, :3]
             feat = x[:, :, 3:]
@@ -323,6 +325,9 @@ class PointNet2SSGCls(nn.Module):
         h = self.drop2(h)
 
         out = self.mlp_out(h)
+        profiler.stop()
+
+        print(profiler.output_text(unicode=True, color=True))
         return out
 
 class PointNet2MSGCls(nn.Module):
@@ -350,6 +355,8 @@ class PointNet2MSGCls(nn.Module):
         self.mlp_out = nn.Linear(256, output_classes)
 
     def forward(self, x):
+        profiler = Profiler()
+        profiler.start()
         if x.shape[-1] > 3:
             pos = x[:, :, :3]
             feat = x[:, :, 3:]
@@ -370,5 +377,8 @@ class PointNet2MSGCls(nn.Module):
         h = self.drop2(h)
 
         out = self.mlp_out(h)
+        profiler.stop()
+
+        print(profiler.output_text(unicode=True, color=True))
         return out
 

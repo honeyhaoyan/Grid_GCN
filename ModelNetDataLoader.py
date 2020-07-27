@@ -40,17 +40,22 @@ def farthest_point_sample(point, npoint):
     return point
 
 def normalization(points):
+    
     size = points.size()
+    print(size)
+    xyz = torch.zeros(size)
     for i in range(size[0]): # batch
         #print(str(xyz_max)+" "+str(xyz_min))
         xyz_max = torch.max(points[i,:,:], 0)
         xyz_min = torch.min(points[i,:,:], 0)
-        #print(str(xyz_max)+" "+str(xyz_min))
-        xyz = (points-xyz_min.values)/(xyz_max.values-xyz_min.values)
+        print(str(xyz_max)+"\n"+str(xyz_min))
+        xyz[i] = (points[i,:,:]-xyz_min.values)/(xyz_max.values-xyz_min.values)
         #xyz_max = torch.max(xyz[i,:,:], 0)
         #xyz_min = torch.min(xyz[i,:,:], 0)
         #print(str(xyz_max)+" "+str(xyz_min))
-        return xyz
+    return xyz
+    
+    
 
 
 class ModelNetDataLoader(Dataset):
