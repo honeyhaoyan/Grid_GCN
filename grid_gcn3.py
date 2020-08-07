@@ -69,6 +69,7 @@ class VoxelModule(nn.Module):
                     self.neighbour_voxel_list[i][j][k] = neighbour_list
         self.neighbour_voxel_list = self.neighbour_voxel_list.repeat([batch_size,1,1,1,1,1]).int()
 
+    @profile
     def set_voxel_value(self, index_voxels, current_list, index, mask):
 
         if (len(current_list)==0):

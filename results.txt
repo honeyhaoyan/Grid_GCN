@@ -1,297 +1,320 @@
 Timer unit: 1e-06 s
 
-Total time: 15.2723 s
+Total time: 8.34741 s
 File: /home/ubuntu/pointnet/Grid_GCN/grid_gcn3.py
-Function: forward at line 93
+Function: set_voxel_value at line 72
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-    93                                               @profile
-    94                                               def forward(self, point_cloud):
-    95         3         17.0      5.7      0.0          size = point_cloud.size()
-    96         3          6.0      2.0      0.0          index_voxels = []
-    97                                                   #context_points = []
-    98         3          6.0      2.0      0.0          mask = []
-    99        99        174.0      1.8      0.0          for i in range(size[0]): # batch
-   100        96        228.0      2.4      0.0              index_voxels_tmp = dict()
-   101        96      55558.0    578.7      0.4              mask_tmp = torch.zeros([self.voxel_size, self.voxel_size, self.voxel_size])
-   102        96       7945.0     82.8      0.1              point_to_voxels = (point_cloud[i]*(self.voxel_size-1)).int()
-   103                                           
-   104        96      12439.0    129.6      0.1              new_point_to_voxels = point_to_voxels[:,0]*10000+point_to_voxels[:,1]*100+point_to_voxels[:,2]
-   105                                           
-   106        96       7253.0     75.6      0.0              sorted_point_to_voxels, sorted_point_indexes = torch.sort(new_point_to_voxels)
-   107        96        227.0      2.4      0.0              current_list = []
-   108                                                       #pre_index = (point_cloud[i,sorted_point_indexes[0],:]*(self.voxel_size-1)).int()
-   109                                           
-   110                                                       '''
-   111                                                       for point in sorted_point_indexes:
-   112                                                           index  = (point_cloud[i,point,:]*(self.voxel_size-1)).int()
-   113                                           
-   114                                                           if (torch.all(torch.eq(index, pre_index))):
-   115                                                               current_list.append(point)
-   116                                                               
-   117                                                           else:
-   118                                                               self.set_voxel_value(index_voxels_tmp, current_list, pre_index, mask_tmp)
-   119                                                               current_list = [point]
-   120                                                               pre_index = index
-   121                                                       '''
-   122                                                       
-   123        96        837.0      8.7      0.0              length = len(sorted_point_to_voxels)
-   124                                           
-   125        96       1025.0     10.7      0.0              array1 = sorted_point_to_voxels[0:(length-1)]
-   126        96        542.0      5.6      0.0              array2 = sorted_point_to_voxels[1:length]
-   127                                           
-   128        96       3123.0     32.5      0.0              index = torch.arange(length-1)
-   129                                           
-   130        96      13423.0    139.8      0.1              difference = index[array1!=array2]
-   131                                           
-   132                                                       #print("==============")
-   133                                                       #print(sorted_point_to_voxels)
-   134                                                       #print(len(sorted_point_to_voxels))
-   135                                                       #print(difference)
-   136                                           
-   137                                                       #pre_index = (point_cloud[i,sorted_point_indexes[0],:]*(self.voxel_size-1)).int()
-   138                                                       #self.set_voxel_value(index_voxels_tmp, [sorted_point_indexes[0]], pre_index, mask_tmp)
-   139                                                       #print([sorted_point_to_voxels[0]])
-   140                                                       #print(pre_index)
-   141                                                       #print(difference[0])
-   142                                                       #print(sorted_point_indexes[0:(difference[0]+1)])
-   143                                                       #print(sorted_point_to_voxels[0:(difference[0]+1)])
-   144                                                       #print((point_cloud[i,sorted_point_indexes[difference[0]+1],:]*(self.voxel_size-1)).int())
-   145                                           
-   146        96        264.0      2.8      0.0              pre_item = 0
-   147     39623     449262.0     11.3      2.9              for item in difference:
-   148     39527    4578613.0    115.8     30.0                  cut_point_index = (point_cloud[i,sorted_point_indexes[item],:]*(self.voxel_size-1)).int()
-   149     39527    9449394.0    239.1     61.9                  self.set_voxel_value(index_voxels_tmp, sorted_point_indexes[pre_item:(item+1)], cut_point_index,mask_tmp)
-   150     39527     682483.0     17.3      4.5                  pre_item = item + 1
-   151                                           
+    72                                               @profile
+    73                                               def set_voxel_value(self, index_voxels, current_list, index, mask):
+    74                                           
+    75     39483     344173.0      8.7      4.1          if (len(current_list)==0):
+    76                                                       print("!!!")
+    77                                                       print(index)
+    78                                                       print(current_list)
+    79                                           
+    80     39483     273413.0      6.9      3.3          x = index[0]
+    81     39483     168263.0      4.3      2.0          y = index[1]
+    82     39483     166128.0      4.2      2.0          z = index[2]
+    83                                                   
+    84     39483    4448118.0    112.7     53.3          mask[x][y][z] = 1
+    85                                           
+    86                                                   
+    87     39483    2947317.0     74.6     35.3          index_voxels.update({(x.item(), y.item(), z.item()):current_list})
+
+Total time: 16.4791 s
+File: /home/ubuntu/pointnet/Grid_GCN/grid_gcn3.py
+Function: forward at line 94
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    94                                               @profile
+    95                                               def forward(self, point_cloud):
+    96         3         16.0      5.3      0.0          size = point_cloud.size()
+    97         3          6.0      2.0      0.0          index_voxels = []
+    98                                                   #context_points = []
+    99         3          4.0      1.3      0.0          mask = []
+   100        99        182.0      1.8      0.0          for i in range(size[0]): # batch
+   101        96        219.0      2.3      0.0              index_voxels_tmp = dict()
+   102        96      74413.0    775.1      0.5              mask_tmp = torch.zeros([self.voxel_size, self.voxel_size, self.voxel_size])
+   103        96       8063.0     84.0      0.0              point_to_voxels = (point_cloud[i]*(self.voxel_size-1)).int()
+   104                                           
+   105        96      12259.0    127.7      0.1              new_point_to_voxels = point_to_voxels[:,0]*10000+point_to_voxels[:,1]*100+point_to_voxels[:,2]
+   106                                           
+   107        96       6538.0     68.1      0.0              sorted_point_to_voxels, sorted_point_indexes = torch.sort(new_point_to_voxels)
+   108        96        223.0      2.3      0.0              current_list = []
+   109                                                       #pre_index = (point_cloud[i,sorted_point_indexes[0],:]*(self.voxel_size-1)).int()
+   110                                           
+   111                                                       '''
+   112                                                       for point in sorted_point_indexes:
+   113                                                           index  = (point_cloud[i,point,:]*(self.voxel_size-1)).int()
+   114                                           
+   115                                                           if (torch.all(torch.eq(index, pre_index))):
+   116                                                               current_list.append(point)
+   117                                                               
+   118                                                           else:
+   119                                                               self.set_voxel_value(index_voxels_tmp, current_list, pre_index, mask_tmp)
+   120                                                               current_list = [point]
+   121                                                               pre_index = index
+   122                                                       '''
+   123                                                       
+   124        96        778.0      8.1      0.0              length = len(sorted_point_to_voxels)
+   125                                           
+   126        96       1032.0     10.8      0.0              array1 = sorted_point_to_voxels[0:(length-1)]
+   127        96        596.0      6.2      0.0              array2 = sorted_point_to_voxels[1:length]
+   128                                           
+   129        96       4725.0     49.2      0.0              index = torch.arange(length-1)
+   130                                           
+   131        96      12937.0    134.8      0.1              difference = index[array1!=array2]
+   132                                           
+   133                                                       #print("==============")
+   134                                                       #print(sorted_point_to_voxels)
+   135                                                       #print(len(sorted_point_to_voxels))
+   136                                                       #print(difference)
+   137                                           
+   138                                                       #pre_index = (point_cloud[i,sorted_point_indexes[0],:]*(self.voxel_size-1)).int()
+   139                                                       #self.set_voxel_value(index_voxels_tmp, [sorted_point_indexes[0]], pre_index, mask_tmp)
+   140                                                       #print([sorted_point_to_voxels[0]])
+   141                                                       #print(pre_index)
+   142                                                       #print(difference[0])
+   143                                                       #print(sorted_point_indexes[0:(difference[0]+1)])
+   144                                                       #print(sorted_point_to_voxels[0:(difference[0]+1)])
+   145                                                       #print((point_cloud[i,sorted_point_indexes[difference[0]+1],:]*(self.voxel_size-1)).int())
+   146                                           
+   147        96        255.0      2.7      0.0              pre_item = 0
+   148     39579     434310.0     11.0      2.6              for item in difference:
+   149     39483    4712155.0    119.3     28.6                  cut_point_index = (point_cloud[i,sorted_point_indexes[item],:]*(self.voxel_size-1)).int()
+   150     39483   10480720.0    265.4     63.6                  self.set_voxel_value(index_voxels_tmp, sorted_point_indexes[pre_item:(item+1)], cut_point_index,mask_tmp)
+   151     39483     720580.0     18.3      4.4                  pre_item = item + 1
    152                                           
-   153        96       8948.0     93.2      0.1              print("--------- "+str(i))
-   154        96        315.0      3.3      0.0              index_voxels.append(index_voxels_tmp)
-   155        96        214.0      2.2      0.0              mask.append(mask_tmp)
-   156                                           
-   157                                                   #self.neighbour_voxel_list = self.neighbour_voxel_list.repeat([size[0],1,1,1,1,1]).int()
-   158                                                   #print(self.neighbour_voxel_list)
-   159         3          7.0      2.3      0.0          return index_voxels, self.neighbour_voxel_list, mask
+   153                                           
+   154        96       8558.0     89.1      0.1              print("--------- "+str(i))
+   155        96        306.0      3.2      0.0              index_voxels.append(index_voxels_tmp)
+   156        96        217.0      2.3      0.0              mask.append(mask_tmp)
+   157                                           
+   158                                                   #self.neighbour_voxel_list = self.neighbour_voxel_list.repeat([size[0],1,1,1,1,1]).int()
+   159                                                   #print(self.neighbour_voxel_list)
+   160         3          6.0      2.0      0.0          return index_voxels, self.neighbour_voxel_list, mask
 
-Total time: 3.33474 s
+Total time: 3.05427 s
 File: /home/ubuntu/pointnet/Grid_GCN/grid_gcn3.py
-Function: forward at line 212
+Function: forward at line 213
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-   212                                               @profile
-   213                                               def forward(self, pos, index_voxels):
-   214         2        127.0     63.5      0.0          print("-------------------- In RVS --------------------")
-   215         2          7.0      3.5      0.0          B = len(index_voxels) # batch_size
-   216                                                   #print(B)
-   217         2          8.0      4.0      0.0          device = pos.device
-   218         2         66.0     33.0      0.0          vs = int(np.cbrt(len(index_voxels[0]))) # 64 -> 4, voxel_size
-   219         2        391.0    195.5      0.0          centroids = torch.zeros(B, self.npoints, dtype=torch.long).to(device)
-   220         2          5.0      2.5      0.0          centroids_index = []
-   221                                                   #print(index_voxels[0])
-   222                                                   #print('-------------------------------------------------------------')
-   223                                           
-   224        66        133.0      2.0      0.0          for batch in range(B):
-   225                                                       #print(batch)
-   226        64        144.0      2.2      0.0              voxels_per_batch = index_voxels[batch]
-   227                                           
-   228        64        119.0      1.9      0.0              indexes = []
-   229                                           
-   230        64        220.0      3.4      0.0              dict_keys = voxels_per_batch.keys()
-   231        64        206.0      3.2      0.0              len_key = len(dict_keys)
-   232                                                       
-   233                                                       #print("npoints")
-   234                                                       #print(self.npoints)
-   235                                                       #print("len key")
-   236                                                       #print(len_key)
-   237        64        176.0      2.8      0.0              if self.npoints <= len_key:
-   238                                                           #print(list(voxels_per_batch.items()))
-   239                                                           #print("npoints: "+str(self.npoints)+" "+"length: "+str(len_key))
-   240        55     168580.0   3065.1      5.1                  selected_keys = random.sample(dict_keys,self.npoints)
-   241                                                           #print(selected_keys)
-   242        55        116.0      2.1      0.0                  i = 0
-   243     15927      34371.0      2.2      1.0                  for per_key in selected_keys:
-   244                                                               #int_index = int(per_key)
-   245                                                               #indexes.append([batch, int_index//10000, int_index//100, int_index%100])
-   246     15872     116443.0      7.3      3.5                      indexes.append([batch, per_key[0],per_key[1],per_key[2]])
-   247     15872      62838.0      4.0      1.9                      val = voxels_per_batch.get(per_key)
-   248                                                               #print(val)
-   249     15872     194595.0     12.3      5.8                      length = len(val)  
-   250                                                               #print(str(length)+'====================')
-   251                                                               #print(val.shape)
-   252     15872      47753.0      3.0      1.4                      if (length == 1):
-   253     15484      28995.0      1.9      0.9                          tem = 0
-   254                                                               else:
-   255       388      12243.0     31.6      0.4                          tem = random.randint(0, len(val)-1)
-   256                                                               #index = int(random.sample(val, 1)[0])      
-   257     15872     651953.0     41.1     19.6                      index = int(val[tem])
-   258     15872    1092185.0     68.8     32.8                      centroids[batch, i] = index
-   259     15872      45390.0      2.9      1.4                      i = i + 1   
-   260                                                           #print(centroids[batch])
-   261                                                       else:
-   262                                                           #self.npoints > len(voxels_per_batch):
-   263                                                           #print(list(voxels_per_batch.items()))
-   264         9         18.0      2.0      0.0                  selected_keys = dict_keys
-   265         9         21.0      2.3      0.0                  i = 0
-   266         9         20.0      2.2      0.0                  added = []
-   267      3287       8213.0      2.5      0.2                  for per_key in selected_keys:
-   268                                                               #int_index = int(per_key)
-   269                                                               #indexes.append([batch, int_index//10000, int_index//100, int_index%100])
-   270      3278      15858.0      4.8      0.5                      indexes.append([batch, per_key[0],per_key[1],per_key[2]])
-   271      3278      14015.0      4.3      0.4                      val = voxels_per_batch.get(per_key)
-   272                                                               #print(val)
-   273                                                               #index = int(random.sample(val, 1)[0]) 
-   274                                                               #print("perkey")
-   275                                                               #print(per_key)
-   276                                                               #print("val")
-   277                                                               #print(val)
-   278      3278      37202.0     11.3      1.1                      length = len(val) 
-   279                                                               #print("length") 
-   280                                                               #print(length)
-   281      3278       7489.0      2.3      0.2                      if (length == 1):
-   282      3146       6747.0      2.1      0.2                          tem = 0
-   283                                                               else:
-   284       132       4460.0     33.8      0.1                          tem = random.randint(0, len(val)-1)
-   285      3278     139632.0     42.6      4.2                      index = int(val[tem])   
-   286      3278     280457.0     85.6      8.4                      centroids[batch, i] = index
-   287      3278      49744.0     15.2      1.5                      added.append(index)
-   288                                                               #print("index")
-   289                                                               #print(index)
-   290      3278       8295.0      2.5      0.2                      i = i + 1     
-   291                                           
+   213                                               @profile
+   214                                               def forward(self, pos, index_voxels):
+   215         2        136.0     68.0      0.0          print("-------------------- In RVS --------------------")
+   216         2          7.0      3.5      0.0          B = len(index_voxels) # batch_size
+   217                                                   #print(B)
+   218         2          9.0      4.5      0.0          device = pos.device
+   219         2         63.0     31.5      0.0          vs = int(np.cbrt(len(index_voxels[0]))) # 64 -> 4, voxel_size
+   220         2        696.0    348.0      0.0          centroids = torch.zeros(B, self.npoints, dtype=torch.long).to(device)
+   221         2          5.0      2.5      0.0          centroids_index = []
+   222                                                   #print(index_voxels[0])
+   223                                                   #print('-------------------------------------------------------------')
+   224                                           
+   225        66        124.0      1.9      0.0          for batch in range(B):
+   226                                                       #print(batch)
+   227        64        127.0      2.0      0.0              voxels_per_batch = index_voxels[batch]
+   228                                           
+   229        64        114.0      1.8      0.0              indexes = []
+   230                                           
+   231        64        245.0      3.8      0.0              dict_keys = voxels_per_batch.keys()
+   232        64        191.0      3.0      0.0              len_key = len(dict_keys)
+   233                                                       
+   234                                                       #print("npoints")
+   235                                                       #print(self.npoints)
+   236                                                       #print("len key")
+   237                                                       #print(len_key)
+   238        64        156.0      2.4      0.0              if self.npoints <= len_key:
+   239                                                           #print(list(voxels_per_batch.items()))
+   240                                                           #print("npoints: "+str(self.npoints)+" "+"length: "+str(len_key))
+   241        52     159419.0   3065.8      5.2                  selected_keys = random.sample(dict_keys,self.npoints)
+   242                                                           #print(selected_keys)
+   243        52        101.0      1.9      0.0                  i = 0
+   244     14388      44844.0      3.1      1.5                  for per_key in selected_keys:
+   245                                                               #int_index = int(per_key)
+   246                                                               #indexes.append([batch, int_index//10000, int_index//100, int_index%100])
+   247     14336      97101.0      6.8      3.2                      indexes.append([batch, per_key[0],per_key[1],per_key[2]])
+   248     14336      51970.0      3.6      1.7                      val = voxels_per_batch.get(per_key)
+   249                                                               #print(val)
+   250     14336     131599.0      9.2      4.3                      length = len(val)  
+   251                                                               #print(str(length)+'====================')
+   252                                                               #print(val.shape)
+   253     14336      27087.0      1.9      0.9                      if (length == 1):
+   254     13942      24933.0      1.8      0.8                          tem = 0
+   255                                                               else:
+   256       394      11423.0     29.0      0.4                          tem = random.randint(0, len(val)-1)
+   257                                                               #index = int(random.sample(val, 1)[0])      
+   258     14336     557898.0     38.9     18.3                      index = int(val[tem])
+   259     14336     873662.0     60.9     28.6                      centroids[batch, i] = index
+   260     14336      38243.0      2.7      1.3                      i = i + 1   
+   261                                                           #print(centroids[batch])
+   262                                                       else:
+   263                                                           #self.npoints > len(voxels_per_batch):
+   264                                                           #print(list(voxels_per_batch.items()))
+   265        12         23.0      1.9      0.0                  selected_keys = dict_keys
+   266        12         25.0      2.1      0.0                  i = 0
+   267        12         24.0      2.0      0.0                  added = []
+   268      4438      10393.0      2.3      0.3                  for per_key in selected_keys:
+   269                                                               #int_index = int(per_key)
+   270                                                               #indexes.append([batch, int_index//10000, int_index//100, int_index%100])
+   271      4426      21800.0      4.9      0.7                      indexes.append([batch, per_key[0],per_key[1],per_key[2]])
+   272      4426      17764.0      4.0      0.6                      val = voxels_per_batch.get(per_key)
+   273                                                               #print(val)
+   274                                                               #index = int(random.sample(val, 1)[0]) 
+   275                                                               #print("perkey")
+   276                                                               #print(per_key)
+   277                                                               #print("val")
+   278                                                               #print(val)
+   279      4426      46393.0     10.5      1.5                      length = len(val) 
+   280                                                               #print("length") 
+   281                                                               #print(length)
+   282      4426       9511.0      2.1      0.3                      if (length == 1):
+   283      4142       8382.0      2.0      0.3                          tem = 0
+   284                                                               else:
+   285       284       8819.0     31.1      0.3                          tem = random.randint(0, len(val)-1)
+   286      4426     193317.0     43.7      6.3                      index = int(val[tem])   
+   287      4426     279538.0     63.2      9.2                      centroids[batch, i] = index
+   288      4426      42268.0      9.5      1.4                      added.append(index)
+   289                                                               #print("index")
+   290                                                               #print(index)
+   291      4426      10084.0      2.3      0.3                      i = i + 1     
    292                                           
-   293         9         21.0      2.3      0.0                  add_num = 0
-   294      2138       6415.0      3.0      0.2                  while add_num < (self.npoints-len_key):
-   295      2129     149594.0     70.3      4.5                      index = int(random.sample(range(pos.shape[1]), 1)[0])
-   296                                                               #print(index)
-   297      2129      30377.0     14.3      0.9                      if index not in added:
-   298      1330      98300.0     73.9      2.9                          centroids[batch, len_key+add_num] = index
-   299      1330      11265.0      8.5      0.3                          indexes.append(index)
-   300      1330       3297.0      2.5      0.1                          add_num += 1
-   301      1330       5789.0      4.4      0.2                          added.append(index)
-   302                                                           #print(index)
-   303                                                           #print(centroids[batch])
-   304                                           
-   305        64        328.0      5.1      0.0              centroids_index.append(indexes)
-   306        64        113.0      1.8      0.0              i = 0
-   307                                              
-   308         2          4.0      2.0      0.0          return centroids, centroids_index # centroid_index is not used
+   293                                           
+   294        12         23.0      1.9      0.0                  add_num = 0
+   295      2901       8194.0      2.8      0.3                  while add_num < (self.npoints-len_key):
+   296      2889     192715.0     66.7      6.3                      index = int(random.sample(range(pos.shape[1]), 1)[0])
+   297                                                               #print(index)
+   298      2889      39840.0     13.8      1.3                      if index not in added:
+   299      1718     119420.0     69.5      3.9                          centroids[batch, len_key+add_num] = index
+   300      1718      14230.0      8.3      0.5                          indexes.append(index)
+   301      1718       4024.0      2.3      0.1                          add_num += 1
+   302      1718       6866.0      4.0      0.2                          added.append(index)
+   303                                                           #print(index)
+   304                                                           #print(centroids[batch])
+   305                                           
+   306        64        350.0      5.5      0.0              centroids_index.append(indexes)
+   307        64        108.0      1.7      0.0              i = 0
+   308                                              
+   309         2          3.0      1.5      0.0          return centroids, centroids_index # centroid_index is not used
 
-Total time: 43.1164 s
+Total time: 45.6323 s
 File: /home/ubuntu/pointnet/Grid_GCN/grid_gcn3.py
-Function: forward at line 327
+Function: forward at line 328
 
 Line #      Hits         Time  Per Hit   % Time  Line Contents
 ==============================================================
-   327                                               @profile
-   328                                               def forward(self, pos, centroids, centroids_index, index_voxels, voxel_size, neighbour_voxel_list, mask):
-   329         2         54.0     27.0      0.0          profiler = Profiler()
-   330         2        198.0     99.0      0.0          profiler.start()
-   331         2          7.0      3.5      0.0          device = pos.device
-   332         2          8.0      4.0      0.0          B, N, _ = pos.shape
-   333         2        663.0    331.5      0.0          center_pos = index_points(pos, centroids)
-   334         2         10.0      5.0      0.0          _, S, _ = center_pos.shape
-   335         2       2514.0   1257.0      0.0          group_idx = torch.ones(B, S, self.n_neighbor).to(device)
-   336         2          6.0      3.0      0.0          i = 0
-   337                                           
-   338                                                   #neighbour_movement_list = np.array([[-1,-1,-1],[-1,-1,0],[-1,-1,1],[-1,0,-1],[-1,0,0],[-1,0,1],[-1,1,-1],[-1,1,0],[-1,1,1],[0,-1,-1],[0,-1,0],[0,-1,1],[0,0,-1],[0,0,0],[0,0,1],[0,1,-1],[0,1,0],[0,1,1],[1,-1,-1],[1,-1,0],[1,-1,1],[1,0,-1],[1,0,0],[1,0,1],[1,1,-1],[1,1,0],[1,1,1]])
-   339                                                   #print(neighbour_movement_list)
-   340                                                   
-   341                                           
-   342        66        654.0      9.9      0.0          for batch in center_pos:
-   343        64       2577.0     40.3      0.0              print(i)
-   344        64        221.0      3.5      0.0              voxel_set = set()
-   345        64        137.0      2.1      0.0              voxels = index_voxels[i]
-   346        64        107.0      1.7      0.0              j = 0
-   347                                                       
-   348                                                       #center_voxel_id = get_voxel_id(center)
-   349                                                       #sorted_v_id, sorted_c_id = sort(cat(center_voxel_id, center))
-   350                                                       #for center in sorted_c_id:
-   351                                                       #    if current_v_id != last_v_id:
-   352                                                       #        preprocess
-   353                                                       #    sampling
-   354                                                       
-   355        64       4923.0     76.9      0.0              center_voxel_id = (batch*(voxel_size-1)).int()
-   356                                                       #print(center_voxel_id)
-   357                                                       #print(center_voxel_id.size())
-   358                                                       #print(center_voxel_id)
-   359                                           
-   360        64       7196.0    112.4      0.0              new_center_voxel_id = center_voxel_id[:,0]*10000+center_voxel_id[:,1]*100+center_voxel_id[:,2]
-   361                                           
-   362        64       4181.0     65.3      0.0              sorted_centers, center_indexes = torch.sort(new_center_voxel_id)
-   363                                                       #for item in sorted_centers:
-   364                                                       #    print(item)
-   365                                                       #print(sorted_centers)
-   366                                                       #print(center_indexes)
-   367                                                       
-   368        64        140.0      2.2      0.0              current_voxel = None
-   369        64        118.0      1.8      0.0              current_context_points = []
-   370        64        107.0      1.7      0.0              j = 0
-   371     20544     198793.0      9.7      0.5              for index in center_indexes:
-   372     20480     573075.0     28.0      1.3                  self_voxel = center_voxel_id[index]
-   373                                                           #print(self_voxel)
-   374     20480      46614.0      2.3      0.1                  if((not current_voxel==None) and torch.all(torch.eq(self_voxel, current_voxel))):
-   375                                                               self_context_points = current_context_points
-   376                                                           else:
-   377                                                               #self_neighbour_voxels = neighbour_voxel_list[i].get(tuple(self_voxel))
-   378     20480     540617.0     26.4      1.3                      x_1 = self_voxel[0].item()
-   379     20480     506862.0     24.7      1.2                      y_1 = self_voxel[1].item()
-   380     20480     495748.0     24.2      1.1                      z_1 = self_voxel[2].item()
-   381     20480     238528.0     11.6      0.6                      self_neighbour_voxels = neighbour_voxel_list[i][x_1][y_1][z_1]
-   382    573440    3761200.0      6.6      8.7                      for voxel in self_neighbour_voxels:
-   383                                                                   #voxel = voxel.int()
-   384                                                                   #print(voxel)
-   385    552960    3695290.0      6.7      8.6                          x = voxel[0].item()
-   386    552960    3570596.0      6.5      8.3                          y = voxel[1].item()
-   387    552960    3570579.0      6.5      8.3                          z = voxel[2].item()
-   388    552960    1113705.0      2.0      2.6                          if (x<0 or x>39 or y<0 or y>39 or z<0 or z>39):
-   389       282        460.0      1.6      0.0                              continue
-   390    536742    5467453.0     10.2     12.7                          if (mask[i][x][y][z].item()==0):
-   391    479200     828353.0      1.7      1.9                              continue
-   392     57542     217615.0      3.8      0.5                          points = voxels.get((x,y,z))
-   393     57542     101287.0      1.8      0.2                          current_context_points = []
-   394                                                                   #for point in points:
-   395                                                                   #    current_context_points.append(point)
-   396                                                                   #print("current context points")
-   397                                                                   #print(current_context_points)
-   398     57542    7688049.0    133.6     17.8                          current_context_points+=points
-   399                                                                   #print(current_context_points)
-   400     57542     314069.0      5.5      0.7                          self_context_points = current_context_points
-   401     20480      34106.0      1.7      0.1                  k = 0
-   402     20480      88481.0      4.3      0.2                  if (len(self_context_points)>self.n_neighbor):
-   403       113      59714.0    528.4      0.1                      self_context_points = random.sample(self_context_points,self.n_neighbor)
-   404     20480      35229.0      1.7      0.1                  if self_context_points:
-   405                                                               # delete for 
-   406                                                               #for item in self_context_points:
-   407                                                               #    group_idx[i][index][k] = item
-   408                                                               #    k = k+1
-   409                                                               #print("group idx pre")
-   410                                                               #print(group_idx[i][index])
-   411     20480    2964230.0    144.7      6.9                      group_idx[i][index][0:(len(self_context_points))] = torch.FloatTensor(self_context_points).to(device)
-   412                                                               #print(group_idx[i][index])
-   413                                                           #while (k<self.n_neighbor):
-   414                                                           #    group_idx[i][index][k] = centroids[i][index]
-   415                                                           #    k = k+1
-   416                                                           #print("group idx after")
-   417                                                           #print(group_idx[i][index])
-   418     20480     115917.0      5.7      0.3                  if (len(self_context_points)<self.n_neighbor):
-   419     20367    1664997.0     81.7      3.9                      group_idx[i][index][len(self_context_points):(self.n_neighbor)] = centroids[i][index]
-   420                                                           #print(group_idx[i][index])
-   421                                                           
-   422     20480      54738.0      2.7      0.1                  j = j+1
-   423                                                           
-   424                                                                   
-   425                                           
-   426        64        103.0      1.6      0.0              i = i+1
-   427                                           
-   428         2         36.0     18.0      0.0          group_idx = group_idx.float().to(device)
-   429         2         83.0     41.5      0.0          print(group_idx.shape)
-   430                                           
-   431         2         87.0     43.5      0.0          profiler.stop()
-   432                                           
-   433         2    5145957.0 2572978.5     11.9          print(profiler.output_text(unicode=True, color=True,show_all = True))
-   434         2          7.0      3.5      0.0          return group_idx
+   328                                               @profile
+   329                                               def forward(self, pos, centroids, centroids_index, index_voxels, voxel_size, neighbour_voxel_list, mask):
+   330         2         74.0     37.0      0.0          profiler = Profiler()
+   331         2        148.0     74.0      0.0          profiler.start()
+   332         2          5.0      2.5      0.0          device = pos.device
+   333         2          7.0      3.5      0.0          B, N, _ = pos.shape
+   334         2        537.0    268.5      0.0          center_pos = index_points(pos, centroids)
+   335         2          8.0      4.0      0.0          _, S, _ = center_pos.shape
+   336         2       5834.0   2917.0      0.0          group_idx = torch.ones(B, S, self.n_neighbor).to(device)
+   337         2          5.0      2.5      0.0          i = 0
+   338                                           
+   339                                                   #neighbour_movement_list = np.array([[-1,-1,-1],[-1,-1,0],[-1,-1,1],[-1,0,-1],[-1,0,0],[-1,0,1],[-1,1,-1],[-1,1,0],[-1,1,1],[0,-1,-1],[0,-1,0],[0,-1,1],[0,0,-1],[0,0,0],[0,0,1],[0,1,-1],[0,1,0],[0,1,1],[1,-1,-1],[1,-1,0],[1,-1,1],[1,0,-1],[1,0,0],[1,0,1],[1,1,-1],[1,1,0],[1,1,1]])
+   340                                                   #print(neighbour_movement_list)
+   341                                                   
+   342                                           
+   343        66        805.0     12.2      0.0          for batch in center_pos:
+   344        64       2087.0     32.6      0.0              print(i)
+   345        64        239.0      3.7      0.0              voxel_set = set()
+   346        64        129.0      2.0      0.0              voxels = index_voxels[i]
+   347        64        111.0      1.7      0.0              j = 0
+   348                                                       
+   349                                                       #center_voxel_id = get_voxel_id(center)
+   350                                                       #sorted_v_id, sorted_c_id = sort(cat(center_voxel_id, center))
+   351                                                       #for center in sorted_c_id:
+   352                                                       #    if current_v_id != last_v_id:
+   353                                                       #        preprocess
+   354                                                       #    sampling
+   355                                                       
+   356        64       4479.0     70.0      0.0              center_voxel_id = (batch*(voxel_size-1)).int()
+   357                                                       #print(center_voxel_id)
+   358                                                       #print(center_voxel_id.size())
+   359                                                       #print(center_voxel_id)
+   360                                           
+   361        64       6945.0    108.5      0.0              new_center_voxel_id = center_voxel_id[:,0]*10000+center_voxel_id[:,1]*100+center_voxel_id[:,2]
+   362                                           
+   363        64       4043.0     63.2      0.0              sorted_centers, center_indexes = torch.sort(new_center_voxel_id)
+   364                                                       #for item in sorted_centers:
+   365                                                       #    print(item)
+   366                                                       #print(sorted_centers)
+   367                                                       #print(center_indexes)
+   368                                                       
+   369        64        146.0      2.3      0.0              current_voxel = None
+   370        64        116.0      1.8      0.0              current_context_points = []
+   371        64        107.0      1.7      0.0              j = 0
+   372     20544     199026.0      9.7      0.4              for index in center_indexes:
+   373     20480     570806.0     27.9      1.3                  self_voxel = center_voxel_id[index]
+   374                                                           #print(self_voxel)
+   375     20480      46866.0      2.3      0.1                  if((not current_voxel==None) and torch.all(torch.eq(self_voxel, current_voxel))):
+   376                                                               self_context_points = current_context_points
+   377                                                           else:
+   378                                                               #self_neighbour_voxels = neighbour_voxel_list[i].get(tuple(self_voxel))
+   379     20480     539905.0     26.4      1.2                      x_1 = self_voxel[0].item()
+   380     20480     490130.0     23.9      1.1                      y_1 = self_voxel[1].item()
+   381     20480     477388.0     23.3      1.0                      z_1 = self_voxel[2].item()
+   382     20480     236221.0     11.5      0.5                      self_neighbour_voxels = neighbour_voxel_list[i][x_1][y_1][z_1]
+   383    573440    3740400.0      6.5      8.2                      for voxel in self_neighbour_voxels:
+   384                                                                   #voxel = voxel.int()
+   385                                                                   #print(voxel)
+   386    552960    3842952.0      6.9      8.4                          x = voxel[0].item()
+   387    552960    3542187.0      6.4      7.8                          y = voxel[1].item()
+   388    552960    3532628.0      6.4      7.7                          z = voxel[2].item()
+   389    552960    1117104.0      2.0      2.4                          if (x<0 or x>39 or y<0 or y>39 or z<0 or z>39):
+   390       297        482.0      1.6      0.0                              continue
+   391    537486    5569671.0     10.4     12.2                          if (mask[i][x][y][z].item()==0):
+   392    468098     834310.0      1.8      1.8                              continue
+   393     69388     265746.0      3.8      0.6                          points = voxels.get((x,y,z))
+   394     69388     123659.0      1.8      0.3                          current_context_points = []
+   395                                                                   #for point in points:
+   396                                                                   #    current_context_points.append(point)
+   397                                                                   #print("current context points")
+   398                                                                   #print(current_context_points)
+   399     69388    8997731.0    129.7     19.7                          current_context_points+=points
+   400                                                                   #print(current_context_points)
+   401     69388     371997.0      5.4      0.8                          self_context_points = current_context_points
+   402     20480      34455.0      1.7      0.1                  k = 0
+   403     20480      85592.0      4.2      0.2                  if (len(self_context_points)>self.n_neighbor):
+   404       252     133788.0    530.9      0.3                      self_context_points = random.sample(self_context_points,self.n_neighbor)
+   405     20480      35422.0      1.7      0.1                  if self_context_points:
+   406                                                               # delete for 
+   407                                                               #for item in self_context_points:
+   408                                                               #    group_idx[i][index][k] = item
+   409                                                               #    k = k+1
+   410                                                               #print("group idx pre")
+   411                                                               #print(group_idx[i][index])
+   412     20480    3196484.0    156.1      7.0                      group_idx[i][index][0:(len(self_context_points))] = torch.FloatTensor(self_context_points).to(device)
+   413                                                               #print(group_idx[i][index])
+   414                                                           #while (k<self.n_neighbor):
+   415                                                           #    group_idx[i][index][k] = centroids[i][index]
+   416                                                           #    k = k+1
+   417                                                           #print("group idx after")
+   418                                                           #print(group_idx[i][index])
+   419     20480     115022.0      5.6      0.3                  if (len(self_context_points)<self.n_neighbor):
+   420     20228    1648849.0     81.5      3.6                      group_idx[i][index][len(self_context_points):(self.n_neighbor)] = centroids[i][index]
+   421                                                           #print(group_idx[i][index])
+   422                                                           
+   423     20480      56494.0      2.8      0.1                  j = j+1
+   424                                                           
+   425                                                                   
+   426                                           
+   427        64        110.0      1.7      0.0              i = i+1
+   428                                           
+   429         2         55.0     27.5      0.0          group_idx = group_idx.float().to(device)
+   430         2         73.0     36.5      0.0          print(group_idx.shape)
+   431                                           
+   432         2         76.0     38.0      0.0          profiler.stop()
+   433                                           
+   434         2    5800835.0 2900417.5     12.7          print(profiler.output_text(unicode=True, color=True,show_all = True))
+   435         2          5.0      2.5      0.0          return group_idx
 
 Total time: 0 s
 File: /home/ubuntu/pointnet/Grid_GCN/pointnet_cls.py
@@ -449,5 +472,3 @@ Line #      Hits         Time  Per Hit   % Time  Line Contents
    137                                                   out = out + iden
    138                                                   out = out.view(-1, self.input_dims, self.input_dims)
    139                                                   return out
-
-(python3.7) ubuntu@ip-172-31-1-87:~/pointnet/Grid_GCN$ 
