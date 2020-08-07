@@ -5,6 +5,7 @@ from torch.autograd import Variable
 import numpy as np
 
 class PointNetCls(nn.Module):
+    @profile
     def __init__(self, output_classes, input_dims=3, conv1_dim=64,
                  dropout_prob=0.5, use_transform=True):
         super(PointNetCls, self).__init__()
@@ -47,7 +48,7 @@ class PointNetCls(nn.Module):
             self.trans_bn1 = nn.BatchNorm1d(input_dims)
             self.transform2 = TransformNet(conv1_dim)
             self.trans_bn2 = nn.BatchNorm1d(conv1_dim)
-
+    @profile
     def forward(self, x):
         batch_size = x.shape[0]
         h = x.permute(0, 2, 1)
@@ -86,6 +87,7 @@ class PointNetCls(nn.Module):
         return out
 
 class TransformNet(nn.Module):
+    @profile
     def __init__(self, input_dims=3, conv1_dim=64):
         super(TransformNet, self).__init__()
         self.conv = nn.ModuleList()
@@ -112,6 +114,7 @@ class TransformNet(nn.Module):
         self.input_dims = input_dims
         self.mlp_out = nn.Linear(conv1_dim * 4, input_dims * input_dims)
 
+    @profile
     def forward(self, h):
         batch_size = h.shape[0]
         for conv, bn in zip(self.conv, self.bn):

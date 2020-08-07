@@ -43,7 +43,7 @@ def normalization(points):
     
     size = points.size()
     print(size)
-    xyz = torch.zeros(size)
+    xyz = torch.zeros_like(points)
     for i in range(size[0]): # batch
         #print(str(xyz_max)+" "+str(xyz_min))
         xyz_max = torch.max(points[i,:,:], 0)

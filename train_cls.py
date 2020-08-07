@@ -18,7 +18,7 @@ import provider
 from ModelNetDataLoader import ModelNetDataLoader
 from pointnet_cls import PointNetCls
 from pointnet2 import PointNet2SSGCls, PointNet2MSGCls
-from grid_gcn_2 import Grid_GCN
+from grid_gcn3 import Grid_GCN
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='pointnet')
@@ -91,6 +91,7 @@ def train(net, opt, scheduler, train_loader, dev):
             tq.set_postfix({
                 'AvgLoss': '%.5f' % (total_loss / num_batches),
                 'AvgAcc': '%.5f' % (total_correct / count)})
+            
     scheduler.step()
 
 def evaluate(net, test_loader, dev):
@@ -128,6 +129,7 @@ elif args.model == 'pointnet2_msg':
 elif args.model == 'grid_gcn':
     net = Grid_GCN(40, batch_size, input_dims=6)
 
+
 net = net.to(dev)
 if args.load_model_path:
     net.load_state_dict(torch.load(args.load_model_path, map_location=dev))
@@ -143,8 +145,10 @@ test_loader = torch.utils.data.DataLoader(test_dataset, batch_size=batch_size, s
 
 best_test_acc = 0
 
-for epoch in range(args.num_epochs):
+#for epoch in range(args.num_epochs):
+for epoch in range(1):
     train(net, opt, scheduler, train_loader, dev)
+    
     if (epoch + 1) % 1 == 0:
         print('Epoch #%d Testing' % epoch)
         test_acc = evaluate(net, test_loader, dev)
@@ -154,3 +158,4 @@ for epoch in range(args.num_epochs):
                 torch.save(net.state_dict(), args.save_model_path)
         print('Current test acc: %.5f (best: %.5f)' % (
                test_acc, best_test_acc))
+   

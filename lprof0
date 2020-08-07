@@ -1,0 +1,15 @@
+Timer unit: 1e-06 s
+
+Total time: 0.029747 s
+File: /home/ubuntu/pointnet/Grid_GCN/simulation.py
+Function: simulate at line 14
+
+Line #      Hits         Time  Per Hit   % Time  Line Contents
+==============================================================
+    14                                           def simulate(iterations, n=10000):
+    15         1       9781.0   9781.0     32.9      s = step(iterations, n)
+    16         1       3430.0   3430.0     11.5      x = np.cumsum(s, axis=0)
+    17         1         13.0     13.0      0.0      bins = np.arange(-30, 30, 1)
+    18         1          2.0      2.0      0.0      y = np.vstack([np.histogram(x[i,:], bins)[0]
+    19         1      16519.0  16519.0     55.5                     for i in range(iterations)])
+    20         1          2.0      2.0      0.0      return y
