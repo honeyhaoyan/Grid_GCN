@@ -48,6 +48,7 @@ def index_points(points, idx):
     repeat_shape = list(idx.shape)
     repeat_shape[0] = 1
     batch_indices = torch.arange(B, dtype=torch.long).to(device).view(view_shape).repeat(repeat_shape)
+    #batch_indices = torch.arange(B, dtype=torch.long).view(view_shape).repeat(repeat_shape)
     new_points = points[batch_indices, idx, :]
     return new_points
 
@@ -69,7 +70,7 @@ class VoxelModule(nn.Module):
                     self.neighbour_voxel_list[i][j][k] = neighbour_list
         self.neighbour_voxel_list = self.neighbour_voxel_list.repeat([batch_size,1,1,1,1,1]).int()
 
-    #@profile
+    @profile
     def set_voxel_value(self, index_voxels, current_list, index, mask):
 
         if (len(current_list)==0):
@@ -91,7 +92,7 @@ class VoxelModule(nn.Module):
 
         #print(index_voxels.get(index))
 
-    #@profile
+    @profile
     def forward(self, point_cloud):
         size = point_cloud.size()
         index_voxels = []
@@ -212,7 +213,7 @@ class RVS(nn.Module):
         self.npoints = npoints
   
     
-    #@profile
+    @profile
     def forward(self, pos, index_voxels):
         print("-------------------- In RVS --------------------")
         B = len(index_voxels) # batch_size
@@ -327,10 +328,10 @@ class FixedRadiusNearNeighbors(nn.Module):
         self.radius = radius
         self.n_neighbor = n_neighbor
 
-    #@profile
+    @profile
     def forward(self, pos, centroids, centroids_index, index_voxels, voxel_size, neighbour_voxel_list, mask):
-        #profiler = Profiler()
-        #profiler.start()
+        profiler = Profiler()
+        profiler.start()
         device = pos.device
         B, N, _ = pos.shape
         center_pos = index_points(pos, centroids)
@@ -432,9 +433,9 @@ class FixedRadiusNearNeighbors(nn.Module):
         group_idx = group_idx.float().to(device)
         print(group_idx.shape)
 
-        #profiler.stop()
+        profiler.stop()
 
-        #print(profiler.output_text(unicode=True, color=True,show_all = True))
+        print(profiler.output_text(unicode=True, color=True,show_all = True))
         return group_idx
       
 
@@ -530,7 +531,9 @@ class RelativePositionMessage(nn.Module):
 
     def forward(self, edges):
         pos = edges.src['pos'] - edges.dst['pos']
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")eneccccgnvcjltdervnbbkkjvblgtekvtlkeginedfel
+
+        device = torch.device("cpu")
         pos = pos.to(device)
         #import pdb; pdb.set_trace()
         if 'feat' in edges.src:
@@ -585,7 +588,8 @@ class Grid_GCN_Conv(nn.Module):
         #print('sizes: ', self.sizes, self.batch_size)
         h = nodes.mailbox['agg_feat'].view(self.batch_size, -1, shape[1], shape[2]).permute(0, 3, 1, 2)
         #print('here shape', h.shape)
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        device = torch.device("cpu")
         h = h.to(device)
         for conv, bn in zip(self.conv, self.bn):
             h = conv(h)
@@ -711,8 +715,8 @@ class Grid_GCN(nn.Module):
         #print("----------")
         #print(voxels)
         #print("----------")
-        #profiler = Profiler()
-        #profiler.start()
+        profiler = Profiler()
+        profiler.start()
         #import pdb; pdb.set_trace()
         x = normalization(x)
         if x.shape[-1] > 3:
@@ -743,8 +747,8 @@ class Grid_GCN(nn.Module):
         h = self.drop2(h)
 
         out = self.mlp_out(h)
-        #profiler.stop()
+        profiler.stop()
 
-        #print(profiler.output_text(unicode=True, color=True))
+        print(profiler.output_text(unicode=True, color=True))
         return out
 

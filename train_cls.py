@@ -18,7 +18,7 @@ import provider
 from ModelNetDataLoader import ModelNetDataLoader
 from pointnet_cls import PointNetCls
 from pointnet2 import PointNet2SSGCls, PointNet2MSGCls
-from grid_gcn3 import Grid_GCN
+from grid_gcn_final import Grid_GCN
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', type=str, default='pointnet')

@@ -18,7 +18,7 @@ import provider
 from ModelNetDataLoader import ModelNetDataLoader
 from pointnet_cls import PointNetCls
 from pointnet2 import PointNet2SSGCls, PointNet2MSGCls
-from grid_gcn3 import Grid_GCN
+from grid_gcn_time import Grid_GCN
 
 import line_profiler
 profile = line_profiler.LineProfiler()
@@ -126,7 +126,8 @@ def main():
             shuffle=True,
             drop_last=True)
 
-    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    #dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dev = torch.device("cpu")
 
     
     #if args.model == 'pointnet':
